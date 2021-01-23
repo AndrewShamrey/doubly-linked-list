@@ -4,7 +4,6 @@ class LinkedList {
     constructor() {
         this._head = new Node();
         this._tail = new Node();
-        this._items = [];
         this.length = 0;
     }
 
@@ -14,7 +13,6 @@ class LinkedList {
         else this._tail.next = currentItem;
         this._tail = currentItem;
         this.length += 1;
-        this._items.push(currentItem);
         return this;
     }
 
@@ -27,29 +25,18 @@ class LinkedList {
     }
 
     at(index) {
-        return this._items[index].data;
+        return this._loop(index, 'data');
     }
 
     insertAt(index, data) {
-        let currentItem;
+        const currentItem = new Node(data, this._loop(index, 'item').prev, this._loop(index, 'item'));
         if (index === this.length) {
             this.append(data);
             return this;
-        } else if (index === 0) {
-            currentItem = new Node(data, null, this._items[index]);
-            this._head = currentItem;
-            this._items[index].prev = currentItem;
-        } else if (index === this.length - 1) {
-            currentItem = new Node(data, this._items[index]);
-            this._tail = currentItem;
-            this._items[index].next = currentItem;
-        } else {
-            currentItem = new Node(data, this._items[index].prev, this._items[index]);
-            this._items[index].prev = currentItem;
-            this._items[index - 1].next = currentItem;
-        }
+        } else if (index === 0) this._head = currentItem;
+        else this._loop(index - 1, 'item').next = currentItem;
+        this._loop(index, 'item').prev = currentItem;
         this.length += 1;
-        this._items.splice(index, 0, currentItem);
         return this;
     }
 
@@ -60,7 +47,6 @@ class LinkedList {
     clear() {
         this._head = new Node();
         this._tail = new Node();
-        this._items = [];
         this.length = 0;
         return this;
     }
@@ -69,29 +55,44 @@ class LinkedList {
         if (this.length < 2) {
             this.clear();
             return this;
-        } else if (index === 0) {
-            this._head = this._items[index + 1];
-            this._items[index + 1].prev = new Node();
-        } else if (index === this.length - 1) {
-            this._tail = this._items[index - 1];
-            this._items[index - 1].next = new Node();
         } else {
-            this._items[index - 1].next = this._items[index + 1];
-            this._items[index + 1].prev = this._items[index - 1];
+            if (index === 0) this._head = this._loop(index + 1, 'item');
+            else this._loop(index - 1, 'item').next = this._loop(index, 'item').next;
+            if (index === this.length - 1) this._tail = this._loop(index - 1, 'item');
+            else this._loop(index + 1, 'item').prev = this._loop(index, 'item').prev;
         }
         this.length -= 1;
-        this._items.splice(index, 1);
         return this;
     }
 
     reverse() {
+        let currentItem = this._head;
+        while (currentItem) {
+            [currentItem.prev, currentItem.next] = [currentItem.next, currentItem.prev];
+            currentItem = currentItem.prev;
+        }
         [this._head, this._tail] = [this._tail, this._head];
-        this._items.reverse();
         return this;
     }
 
     indexOf(data) {
-        return this._items.indexOf(this._items.find((item) => item.data === data));
+        let currentItem = this._head, i = 0;
+        while (currentItem) {
+            if (this._loop(i, 'data') === data) return i;
+            currentItem = currentItem.next;
+            i++;
+        }
+        return -1;
+    }
+
+    _loop(index, type) {
+        let currentItem = this._head, i = 0;
+        while (currentItem) {
+            if (i === index) return type === 'item' ? currentItem : currentItem.data;
+            currentItem = currentItem.next;
+            i++;
+        }
+        return 'Error';
     }
 }
 
